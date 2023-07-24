@@ -8,6 +8,7 @@ import entities, { User } from './entities';
 import { RefreshTokenService } from './services/refresh-token.service';
 import { MapperService } from './services/mapper.service';
 import { UserService } from './services/user.service';
+import { UserController } from './controllers/user.controller';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { UserService } from './services/user.service';
     }),
     PassportModule
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UserController],
   providers: [GoogleStrategy, RefreshTokenService, UserService, MapperService],
 })
 export class AppModule { }
