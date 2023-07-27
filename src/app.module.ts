@@ -9,6 +9,8 @@ import { RefreshTokenService } from './services/refresh-token.service';
 import { MapperService } from './services/mapper.service';
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
+import { VideoController } from './controllers/video.controller';
+import { VideoService } from './services/video.service';
 
 @Module({
   imports: [
@@ -32,7 +34,7 @@ import { UserController } from './controllers/user.controller';
     }),
     PassportModule
   ],
-  controllers: [AuthController, UserController],
-  providers: [GoogleStrategy, RefreshTokenService, UserService, MapperService],
+  controllers: [AuthController, UserController, VideoController],
+  providers: [GoogleStrategy, RefreshTokenService, UserService, MapperService, VideoService],
 })
 export class AppModule { }
