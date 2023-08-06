@@ -7,6 +7,5 @@ export class GetUserDTO {
     avatar: string;
 
     description: string;
-
-    coins: number
+    
 }

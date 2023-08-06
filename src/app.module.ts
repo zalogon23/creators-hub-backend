@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthController } from './controllers/auth.controller';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,6 +9,8 @@ import { MapperService } from './services/mapper.service';
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
 import { VideoController } from './controllers/video.controller';
+import { CloudinaryProvider } from './cloudinary/cloudinary';
+import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { VideoService } from './services/video.service';
 
 @Module({
@@ -17,7 +18,7 @@ import { VideoService } from './services/video.service';
     ConfigModule.forRoot({
       isGlobal: true
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature(entities),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -34,7 +35,7 @@ import { VideoService } from './services/video.service';
     }),
     PassportModule
   ],
-  controllers: [AuthController, UserController, VideoController],
-  providers: [GoogleStrategy, RefreshTokenService, UserService, MapperService, VideoService],
+  controllers: [UserController, VideoController],
+  providers: [GoogleStrategy, RefreshTokenService, UserService, VideoService, MapperService, CloudinaryProvider, CloudinaryService],
 })
 export class AppModule { }

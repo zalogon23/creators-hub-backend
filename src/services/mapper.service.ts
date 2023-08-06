@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { UserGoogleDTO } from 'src/dtos/user-google.dto';
+import { GetUserDTO } from 'src/dtos/get_user.dto';
 import { User } from 'src/entities';
 
 @Injectable()
 export class MapperService {
-    mapToUser(user: UserGoogleDTO): User {
+    mapToUser(user: GetUserDTO): User {
         return {
-            id: user.googleId,
-            username: user.displayName,
-            description: "",
-            coins: 0
+            id: user.id,
+            username: user.username,
+            description: ""
         }
     }
 }

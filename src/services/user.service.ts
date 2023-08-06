@@ -24,49 +24,11 @@ export class UserService {
 
     async findUserById(id: string) {
         try {
+            console.log("again: " + id)
             return await this.userRepository.findOneBy({ id })
         } catch (err) {
             console.log(err)
             return null
-        }
-    }
-
-    async hasEnoughCoins(coins: number, id: string): Promise<boolean> {
-        try {
-            const user = await this.userRepository.findOneBy({ id })
-            console.log(`User: ${JSON.stringify(user)}`)
-            console.log(`User coins: ${user.coins}`)
-            console.log(`Necessary coins: ${coins}`)
-            console.log(`Has enough funds? ${user && (user.coins > coins)}`)
-            const hasEnoughCoins = user && (user.coins > coins)
-            console.log(`UserService.hasEnoughCoins: ${hasEnoughCoins}`)
-            if (!hasEnoughCoins) {
-                return false
-            }
-            return true
-        } catch (err) {
-            console.log(err)
-            return false
-        }
-    }
-
-    async spend(coins: number, id: string): Promise<boolean> {
-        try {
-            const hasEnoughCoins = await this.hasEnoughCoins(coins, id)
-            if (!hasEnoughCoins) {
-                return false
-            }
-            const user = await this.userRepository.findOneBy({ id })
-            console.log("current coins: " + user.coins)
-            console.log("spending coins: " + coins)
-            user.coins -= coins
-            console.log("after spending coins: " + user.coins)
-            console.log(JSON.stringify(user))
-            await this.userRepository.save(user);
-            return true
-        } catch (err) {
-            console.log(err)
-            return false
         }
     }
 
