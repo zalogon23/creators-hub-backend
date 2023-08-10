@@ -15,7 +15,7 @@ export class VideoService {
                 id: uuid(),
                 creatorId,
                 url: createVideoDto.secure_url,
-                duration: Math.ceil(createVideoDto.duration * 60)
+                duration: Math.ceil(createVideoDto.duration)
             }
             const result = await this.videoService
                 .createQueryBuilder()
