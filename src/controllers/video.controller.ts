@@ -1,8 +1,7 @@
-import { Controller, Post, Headers, Res, UploadedFile, UseInterceptors, UseGuards, Get } from '@nestjs/common';
+import { Controller, Post, Headers, Res, UploadedFile, UseInterceptors, UseGuards, Get, Param } from '@nestjs/common';
 import { Response } from "express"
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { v4 as uuid } from "uuid"
 import { VideoService } from 'src/services/video.service';
 import { TokenGuard } from 'src/strategies/guards/token.guard';
 import { UserService } from 'src/services/user.service';
@@ -30,5 +29,12 @@ export class VideoController {
         const videos = await this.videoService.getVideos()
         console.log("your videos: " + JSON.stringify(videos))
         return res.json({ videos })
+    }
+
+    @Get(":videoId")
+    async getVideo(@Param('id') videoId, @Res() res: Response) {
+        const video = await this.videoService.findVideoById(videoId)
+        console.log("your videos: " + JSON.stringify(video))
+        return res.json({ video })
     }
 }
