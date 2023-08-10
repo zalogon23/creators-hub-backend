@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Video } from 'src/entities';
 import { Repository } from 'typeorm';
+import { v4 as uuid } from "uuid"
 
 @Injectable()
 export class VideoService {
@@ -11,6 +12,7 @@ export class VideoService {
     async createVideo(createVideoDto: any, creatorId: string) {
         try {
             const video = {
+                id: uuid(),
                 creatorId,
                 url: createVideoDto.secure_url,
                 duration: Math.ceil(createVideoDto.duration * 60)
@@ -21,6 +23,7 @@ export class VideoService {
                 .into(Video)
                 .values(video)
                 .execute()
+            console.log(result)
         } catch (err) {
             console.log(err)
         }
@@ -28,7 +31,6 @@ export class VideoService {
 
     async findVideoById(id: string) {
         try {
-            console.log("again: " + id)
             return await this.videoService.findOneBy({ id })
         } catch (err) {
             console.log(err)
@@ -36,17 +38,14 @@ export class VideoService {
         }
     }
 
-    async getVideo(header: string) {
+    async getVideos() {
         try {
 
-            const apiKey = this.configService.get("API_KEY")
-            const response = await fetch(`https://people.googleapis.com/v1/people/me?personFields=names,photos&key=${apiKey}`, {
-                headers: {
-                    "Authorization": header,
-                },
-            })
-            const data = await response.json()
-            return data
+            const videos = await this.videoService
+                .createQueryBuilder()
+                .getMany()
+
+            return videos
         } catch (err) {
             console.log(err)
             return null

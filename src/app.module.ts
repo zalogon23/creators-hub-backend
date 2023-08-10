@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { GoogleStrategy } from './strategies/google.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import entities, { User } from './entities';
@@ -36,6 +35,6 @@ import { VideoService } from './services/video.service';
     PassportModule
   ],
   controllers: [UserController, VideoController],
-  providers: [GoogleStrategy, RefreshTokenService, UserService, VideoService, MapperService, CloudinaryProvider, CloudinaryService],
+  providers: [RefreshTokenService, UserService, VideoService, MapperService, CloudinaryProvider, CloudinaryService],
 })
 export class AppModule { }

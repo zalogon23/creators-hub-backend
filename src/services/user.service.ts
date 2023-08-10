@@ -24,7 +24,6 @@ export class UserService {
 
     async findUserById(id: string) {
         try {
-            console.log("again: " + id)
             return await this.userRepository.findOneBy({ id })
         } catch (err) {
             console.log(err)
