@@ -9,5 +9,9 @@ export class UserDTO {
     @MinLength(5)
     username: string;
 
+    @IsNotEmpty()
+    @MinLength(5)
+    avatar: string;
+
     description: string;
 }

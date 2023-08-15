@@ -11,6 +11,7 @@ import { VideoController } from './controllers/video.controller';
 import { CloudinaryProvider } from './cloudinary/cloudinary';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { VideoService } from './services/video.service';
+import { ThumbnailService } from './services/thumbnail.service';
 
 @Module({
   imports: [
@@ -35,6 +36,6 @@ import { VideoService } from './services/video.service';
     PassportModule
   ],
   controllers: [UserController, VideoController],
-  providers: [RefreshTokenService, UserService, VideoService, MapperService, CloudinaryProvider, CloudinaryService],
+  providers: [RefreshTokenService, UserService, VideoService, MapperService, CloudinaryProvider, CloudinaryService, ThumbnailService],
 })
 export class AppModule { }
