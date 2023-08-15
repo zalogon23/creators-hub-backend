@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
+import { json } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +16,7 @@ async function bootstrap() {
     origin: config.get("FRONT_URL"),
     credentials: true,
   });
+  app.use(json())
   app.use(cookieParser())
   await app.listen(config.get("PORT"));
 }

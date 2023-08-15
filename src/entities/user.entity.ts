@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 import { Video } from './video.entity';
+import { Reaction } from './reaction.entity';
 
 @Entity()
 export class User {
@@ -28,4 +29,7 @@ export class User {
 
     @OneToMany(() => Video, video => video.creator)
     videos: Video[];
+
+    @OneToMany(() => Reaction, reaction => reaction.user)
+    reactions: Reaction[];
 }

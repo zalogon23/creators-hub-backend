@@ -10,7 +10,8 @@ export class MapperService {
             username: user.username,
             description: "",
             avatar: user.avatar,
-            videos: []
+            videos: [],
+            reactions: []
         }
     }
     mapGoogleDTOToGetDTO(data: any): GetUserDTO {
