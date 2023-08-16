@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 import { User } from './user.entity';
 import { Reaction } from './reaction.entity';
+import { Comment } from './comment.entity';
 
 @Entity()
 export class Video {
@@ -38,11 +39,14 @@ export class Video {
         nullable: false
     })
     duration: number;
-    
+
     @ManyToOne(() => User, user => user.videos)
     @JoinColumn({ name: 'creatorId' })
     creator: User;
 
     @OneToMany(() => Reaction, reaction => reaction.video)
     reactions: Reaction[];
+
+    @OneToMany(() => Comment, comment => comment.video)
+    comments: Comment[];
 }
