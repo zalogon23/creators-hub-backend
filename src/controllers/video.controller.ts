@@ -6,7 +6,6 @@ import { VideoService } from 'src/services/video.service';
 import { TokenGuard } from 'src/strategies/guards/token.guard';
 import { UserService } from 'src/services/user.service';
 import { MapperService } from 'src/services/mapper.service';
-import { GetVideoDTO } from 'src/dtos/get-video-dto';
 import { ThumbnailService } from 'src/services/thumbnail.service';
 import { ReactionService } from 'src/services/reaction.service';
 import { CreateReactionDTO } from 'src/dtos/create-reaction-dto';
@@ -32,6 +31,7 @@ export class VideoController {
         const data = await this.userService.getUser(header)
         console.log("data: " + JSON.stringify(data))
         const user = this.mapperService.mapGoogleDTOToGetDTO(data)
+        if (!user) return res.status(401).json({ message: "Couldn't find user" })
         console.log("user: " + JSON.stringify(user))
         const result = await this.cloudinaryService.upload(video)
         console.log("result: " + JSON.stringify(result))
@@ -58,19 +58,14 @@ export class VideoController {
     }
 
     @Get(":id")
-    async getVideo(@Param('id') videoId, @Res() res: Response) {
+    async getVideo(@Param('id') videoId, @Headers('Authorization') header: string, @Res() res: Response) {
         console.log(videoId)
-        const video = await this.videoService.findVideoById(videoId)
-        const user = await this.userService.findUserById(video.creatorId)
-        const videoDTO: GetVideoDTO = {
-            ...video,
-            creator: {
-                id: video.creatorId,
-                avatar: user.avatar,
-                username: user.username
-            }
-        }
-        return res.json({ video: videoDTO })
+        const data = await this.userService.getUser(header)
+        console.log("data: " + JSON.stringify(data))
+        const user = this.mapperService.mapGoogleDTOToGetDTO(data)
+        console.log("user: " + JSON.stringify(user))
+        const video = await this.videoService.findVideoById(videoId, user?.id || null)
+        return res.json({ video })
     }
 
     @Put("react/:id")
@@ -81,6 +76,7 @@ export class VideoController {
         if (!body) return res.status(500)
         const googleUser = await this.userService.getUser(header)
         const user = this.mapperService.mapGoogleDTOToGetDTO(googleUser)
+        if (!user) return res.status(401).json({ message: "Couldn't find user" })
         console.log(user)
         const successful = await this.reactionService.react(body as CreateReactionDTO, videoId, user.id)
 
@@ -93,6 +89,7 @@ export class VideoController {
         console.log(videoId)
         const googleUser = await this.userService.getUser(header)
         const user = this.mapperService.mapGoogleDTOToGetDTO(googleUser)
+        if (!user) return res.status(401).json({ message: "Couldn't find user" })
         const reaction = await this.reactionService.getReaction(videoId, user.id)
 
         if (!reaction) {

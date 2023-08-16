@@ -13,6 +13,8 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { VideoService } from './services/video.service';
 import { ThumbnailService } from './services/thumbnail.service';
 import { ReactionService } from './services/reaction.service';
+import { SubscriptionService } from './services/subscription.service copy';
+import { SubscriptionController } from './controllers/subscription.controller';
 
 @Module({
   imports: [
@@ -36,7 +38,7 @@ import { ReactionService } from './services/reaction.service';
     }),
     PassportModule
   ],
-  controllers: [UserController, VideoController],
-  providers: [RefreshTokenService, UserService, VideoService, MapperService, CloudinaryProvider, CloudinaryService, ThumbnailService, ReactionService],
+  controllers: [UserController, VideoController, SubscriptionController],
+  providers: [RefreshTokenService, UserService, VideoService, MapperService, CloudinaryProvider, CloudinaryService, ThumbnailService, ReactionService, SubscriptionService],
 })
 export class AppModule { }

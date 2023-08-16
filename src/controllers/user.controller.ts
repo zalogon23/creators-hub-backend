@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { GetUserDTO } from 'src/dtos/get_user.dto';
 import { UserService } from 'src/services/user.service';
 import { Response } from "express"
-import "isomorphic-fetch"
 import { MapperService } from 'src/services/mapper.service';
 import { TokenGuard } from 'src/strategies/guards/token.guard';
 
@@ -20,7 +19,7 @@ export class UserController {
             const googleId = data.names && data.names.length > 0 ? data.names[0].metadata.source.id : null;
 
             if (data?.error && data.error?.code) {
-                return res.sendStatus(401)
+                return res.status(401).json({ message: "Couldn't find user" })
             }
 
             const userFromDB = await this.userService.findUserById(googleId)
@@ -47,6 +46,7 @@ export class UserController {
         }
         catch (ex) {
             console.log(ex)
+            return res.status(500).json({ message: "Server error in User Controller" })
         }
     }
 

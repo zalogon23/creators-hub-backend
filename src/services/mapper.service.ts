@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { GetVideoDTO } from 'src/dtos/get-video-dto';
 import { GetUserDTO } from 'src/dtos/get_user.dto';
-import { User } from 'src/entities';
+import { User, Video } from 'src/entities';
 
 @Injectable()
 export class MapperService {
@@ -11,7 +12,9 @@ export class MapperService {
             description: "",
             avatar: user.avatar,
             videos: [],
-            reactions: []
+            reactions: [],
+            subscribers: [],
+            subscriptions: []
         }
     }
     mapGoogleDTOToGetDTO(data: any): GetUserDTO {
@@ -26,5 +29,20 @@ export class MapperService {
             avatar
         }
         return user
+    }
+    mapVideoEntityToGetVideoDTO(video: Video): GetVideoDTO {
+        return {
+            id: video.id,
+            description: video.description,
+            duration: video.duration,
+            title: video.title,
+            url: video.url,
+            thumbnail: video.thumbnail,
+            creator: {
+                id: video.creator.id,
+                avatar: video.creator.avatar,
+                username: video.creator.username
+            }
+        }
     }
 }

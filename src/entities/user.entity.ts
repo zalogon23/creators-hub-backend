@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 import { Video } from './video.entity';
 import { Reaction } from './reaction.entity';
+import { Subscription } from './subscription.entity';
 
 @Entity()
 export class User {
@@ -32,4 +33,10 @@ export class User {
 
     @OneToMany(() => Reaction, reaction => reaction.user)
     reactions: Reaction[];
+
+    @OneToMany(() => Subscription, subscription => subscription.subscribee)
+    subscribers: Subscription[];
+
+    @OneToMany(() => Subscription, subscription => subscription.subscriber)
+    subscriptions: Subscription[];
 }

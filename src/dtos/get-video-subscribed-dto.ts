@@ -1,4 +1,4 @@
-export interface GetVideoDTO {
+export interface GetVideoSubscribedDTO {
     id: string;
     creator: {
         id: string;
@@ -10,4 +10,5 @@ export interface GetVideoDTO {
     url: string;
     duration: number;
     thumbnail: string;
+    subscribed: boolean;
 }
