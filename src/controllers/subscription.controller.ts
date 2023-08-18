@@ -1,6 +1,4 @@
 import { Body, Controller, Get, Headers, Put, Res, UseGuards } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { GetUserDTO } from 'src/dtos/get_user.dto';
 import { UserService } from 'src/services/user.service';
 import { Response } from "express"
 import { MapperService } from 'src/services/mapper.service';

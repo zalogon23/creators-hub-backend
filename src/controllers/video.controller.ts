@@ -9,6 +9,7 @@ import { MapperService } from 'src/services/mapper.service';
 import { ThumbnailService } from 'src/services/thumbnail.service';
 import { ReactionService } from 'src/services/reaction.service';
 import { CreateReactionDTO } from 'src/dtos/create-reaction-dto';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('video')
 export class VideoController {
@@ -18,84 +19,101 @@ export class VideoController {
         private readonly thumbnailService: ThumbnailService,
         private readonly userService: UserService,
         private readonly reactionService: ReactionService,
+        private readonly configService: ConfigService,
         private readonly mapperService: MapperService) { }
 
     @Post("")
     @UseGuards(TokenGuard)
     @UseInterceptors(AnyFilesInterceptor())
     async uploadVideo(@UploadedFiles() files: Array<Express.Multer.File>, @Body() formData, @Headers('Authorization') header: string, @Res() res: Response) {
-        const [video, thumbnail] = files
-        console.log("video: " + video)
-        console.log("thumbnail: " + thumbnail)
-        const { title, description } = formData
-        const data = await this.userService.getUser(header)
-        console.log("data: " + JSON.stringify(data))
-        const user = this.mapperService.mapGoogleDTOToGetDTO(data)
-        if (!user) return res.status(401).json({ message: "Couldn't find user" })
-        console.log("user: " + JSON.stringify(user))
-        const result = await this.cloudinaryService.upload(video)
-        console.log("result: " + JSON.stringify(result))
-        const imageResult = await this.thumbnailService.createThumbnail(thumbnail)
-        console.log("thumbnail: " + JSON.stringify(imageResult))
-        this.videoService.createVideo(result, user.id, title, description, imageResult?.secure_url)
-        console.log("uploaded video")
-        return res.json({ url: result.secure_url as string })
+        try {
+            const [video, thumbnail] = files
+            const validVideo = await this.videoService.isValidVideo(video.buffer)
+            if (!validVideo) {
+                return res.status(400).json({ message: "There is a problem with the chosen video, please try another one." })
+            }
+            const { title, description } = formData
+            if (!title || !description) {
+                return res.status(400).json({ message: "We need a title and description for your video." })
+            }
+            const data = await this.userService.getUser(header)
+            const user = this.mapperService.mapGoogleDTOToGetDTO(data)
+            if (!user) {
+                return res.status(401).json({ message: "Couldn't find user" })
+            }
+            const result = await this.cloudinaryService.upload(video)
+            const imageResult = await this.thumbnailService.createThumbnail(thumbnail)
+            this.videoService.createVideo(result, user.id, title, description, imageResult?.secure_url)
+            return res.json({ url: result.secure_url as string })
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ message: "There was an error in the Video Controller." })
+        }
     }
 
     @Get("")
     @UseGuards(TokenGuard)
     async getVideos(@Res() res: Response) {
-        const videos = await this.videoService.getVideos()
-        console.log("your videos: " + JSON.stringify(videos))
-        return res.json({ videos })
+        try {
+            const videos = await this.videoService.getVideos()
+            return res.json({ videos })
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ message: "There was an error in the Video Controller." })
+        }
     }
 
     @Get("search/:search")
     async searchVideos(@Res() res: Response, @Param('search') search) {
-        const videos = await this.videoService.searchVideos(search)
-        console.log("your videos: " + JSON.stringify(videos))
-        return res.json({ videos })
+        try {
+            const videos = await this.videoService.searchVideos(search)
+            return res.json({ videos })
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ message: "There was an error in the Video Controller." })
+        }
     }
 
     @Get(":id")
     async getVideo(@Param('id') videoId, @Headers('Authorization') header: string, @Res() res: Response) {
-        console.log(videoId)
-        const data = await this.userService.getUser(header)
-        console.log("data: " + JSON.stringify(data))
-        const user = this.mapperService.mapGoogleDTOToGetDTO(data)
-        console.log("user: " + JSON.stringify(user))
-        const video = await this.videoService.findVideoById(videoId, user?.id || null)
-        return res.json({ video })
+        try {
+            if (!videoId) {
+                return res.status(400).json({ message: "You need to specify which video you're looking for." })
+            }
+            const data = await this.userService.getUser(header)
+            const user = this.mapperService.mapGoogleDTOToGetDTO(data)
+            if (!user) {
+                return res.status(401).json({ message: "Couldn't find user" })
+            }
+            const video = await this.videoService.findVideoById(videoId, user?.id || "")
+            return res.json({ video })
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ message: "There was an error in the Video Controller." })
+        }
     }
 
     @Put("react/:id")
     @UseGuards(TokenGuard)
     async reactVideo(@Param('id') videoId, @Headers('Authorization') header: string, @Res() res: Response, @Body() body) {
-        console.log(videoId)
-        console.log(body)
-        if (!body) return res.status(500)
-        const googleUser = await this.userService.getUser(header)
-        const user = this.mapperService.mapGoogleDTOToGetDTO(googleUser)
-        if (!user) return res.status(401).json({ message: "Couldn't find user" })
-        console.log(user)
-        const successful = await this.reactionService.react(body as CreateReactionDTO, videoId, user.id)
+        try {
+            if (!videoId) {
+                return res.status(400).json({ message: "You need to specify which video you're looking for." })
+            }
+            if (!body) {
+                return res.status(400).json({ message: "Wrong request body." })
+            }
+            const data = await this.userService.getUser(header)
+            const user = this.mapperService.mapGoogleDTOToGetDTO(data)
+            if (!user) {
+                return res.status(401).json({ message: "Couldn't find user" })
+            }
+            const successful = await this.reactionService.react(body as CreateReactionDTO, videoId, user.id)
 
-        return res.json({ successful })
-    }
-
-    @Get("react/:id")
-    @UseGuards(TokenGuard)
-    async getVideoReaction(@Param('id') videoId, @Headers('Authorization') header: string, @Res() res: Response, @Req() req: Request) {
-        console.log(videoId)
-        const googleUser = await this.userService.getUser(header)
-        const user = this.mapperService.mapGoogleDTOToGetDTO(googleUser)
-        if (!user) return res.status(401).json({ message: "Couldn't find user" })
-        const reaction = await this.reactionService.getReaction(videoId, user.id)
-
-        if (!reaction) {
-            return res.status(404).json({ message: "There's no reaction between user and video." })
+            return res.json({ successful })
+        } catch (err) {
+            console.log(err)
+            return res.status(500).json({ message: "There was an error in the Video Controller." })
         }
-
-        return res.json({ reaction })
     }
 }

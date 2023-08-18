@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { GetVideoDTO } from 'src/dtos/get-video-dto';
 import { Video } from 'src/entities';
-import { ILike, JsonContains, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { v4 as uuid } from "uuid"
 import { MapperService } from './mapper.service';
 import { GetVideoSubscribedDTO } from 'src/dtos/get-video-subscribed-dto';
+import * as ffmpeg from 'fluent-ffmpeg';
+import * as fs from "fs"
 
 @Injectable()
 export class VideoService {
@@ -37,27 +38,35 @@ export class VideoService {
 
     async findVideoById(videoId: string, userId?: string): Promise<GetVideoSubscribedDTO> {
         try {
-            const video = await this.videoService.findOne({
-                relations: ['creator', 'creator.subscribers'],
-                where: {
-                    id: videoId
-                }
-            })
+            const video = await this.videoService.createQueryBuilder('video')
+                .leftJoinAndSelect('video.creator', 'creator')
+                .leftJoin(
+                    'Subscription',
+                    'subscriptions',
+                    'subscriptions.subscriberId = :userId AND subscriptions.subscribeeId = video.creatorId',
+                    { userId }
+                )
+                .leftJoin(
+                    'Reaction',
+                    'reactions',
+                    'reactions.reactorId = :userId AND reactions.videoId = :videoId',
+                    { userId, videoId }
+                )
+                .addSelect('CASE WHEN subscriptions.id IS NOT NULL THEN true ELSE false END', 'subscribed')
+                .addSelect('reactions.liked', 'liked')
+                .where('video.id = :videoId', { videoId })
+                .getRawOne();
+
+            console.log(video)
 
             if (!video) {
                 return null;
             }
 
-            const videoDto = this.mapperService.mapVideoEntityToGetVideoDTO(video)
+            const videoDto = this.mapperService.mapVideoRawToGetVideoDTO(video)
+            console.log(videoDto)
 
-            console.log("video: " + JSON.stringify(video))
-            console.log("creator: " + JSON.stringify(video.creator))
-            console.log("subscribers: " + JSON.stringify(video.creator.subscribers))
-            console.log("my id: " + JSON.stringify(userId))
-
-            const subscribed = userId ? video.creator.subscribers.some(subscriber => subscriber.subscriberId === userId) : false;
-
-            return { ...videoDto, subscribed } as GetVideoSubscribedDTO;
+            return videoDto;
         } catch (err) {
             console.log(err)
             return null
@@ -90,6 +99,46 @@ export class VideoService {
         } catch (err) {
             console.log(err)
             return null
+        }
+    }
+
+    async isValidVideo(videoBuffer: Buffer): Promise<boolean> {
+        try {
+            const maxDuration = this.configService.get('MAX_VIDEO_DURATION');
+            if (!maxDuration) {
+                return false;
+            }
+            const duration = await this.getVideoDuration(videoBuffer);
+            return duration < +maxDuration;
+        } catch (err) {
+            console.log(err);
+            return false;
+        }
+    }
+
+    async getVideoDuration(buffer: Buffer): Promise<number> {
+        try {
+            const tempFilePath = __dirname + "\\temp_video.mp4"
+            fs.writeFileSync(tempFilePath, buffer);
+
+            return new Promise<number>((resolve, reject) => {
+                ffmpeg.ffprobe(tempFilePath, (err, metadata) => {
+                    fs.unlink(tempFilePath, unlinkErr => {
+                        if (unlinkErr) {
+                            console.error('Error deleting temporary file:', unlinkErr);
+                        }
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        const durationInSeconds = Math.ceil(metadata.format.duration);
+                        resolve(durationInSeconds);
+                    });
+                });
+            });
+        } catch (err) {
+            console.log(err);
+            return Infinity;
         }
     }
 }

@@ -23,8 +23,12 @@ export class ReactionService {
             console.log(reaction)
             const existReaction = await this.reactionRepository.findOneBy({ reactorId: reaction.reactorId, videoId: reaction.videoId })
             if (existReaction) {
+                if (existReaction.liked == reaction.liked) {
+                    await this.reactionRepository.remove(existReaction)
+                    return true
+                }
                 existReaction.liked = reaction.liked
-                this.reactionRepository.save(existReaction)
+                await this.reactionRepository.save(existReaction)
                 return true
             }
             const result = await this.reactionRepository
@@ -37,22 +41,6 @@ export class ReactionService {
         } catch (err) {
             console.log(err)
             return false
-        }
-    }
-
-    async getReaction(videoId: string, reactorId: string) {
-        try {
-            const result = await this.reactionRepository.findOneBy({ videoId, reactorId })
-            if (!result) return null
-            const reaction: GetReactionDTO = {
-                videoId,
-                reactorId,
-                liked: result.liked
-            }
-            return reaction
-        } catch (err) {
-            console.log(err)
-            return null
         }
     }
 }
