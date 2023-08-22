@@ -6,7 +6,7 @@ import { ILike, Repository } from 'typeorm';
 import { v4 as uuid } from "uuid"
 import { MapperService } from './mapper.service';
 import { GetVideoSubscribedDTO } from 'src/dtos/get-video-subscribed-dto';
-import * as ffmpeg from 'fluent-ffmpeg';
+import getVideoDurationProcess from 'get-video-duration';
 import * as fs from "fs"
 
 @Injectable()
@@ -104,11 +104,13 @@ export class VideoService {
 
     async isValidVideo(videoBuffer: Buffer): Promise<boolean> {
         try {
+            console.log("got in the is valid function")
             const maxDuration = this.configService.get('MAX_VIDEO_DURATION');
             if (!maxDuration) {
                 return false;
             }
             const duration = await this.getVideoDuration(videoBuffer);
+            console.log("received the video duration: " + duration)
             return duration < +maxDuration;
         } catch (err) {
             console.log(err);
@@ -118,24 +120,13 @@ export class VideoService {
 
     async getVideoDuration(buffer: Buffer): Promise<number> {
         try {
-            const tempFilePath = __dirname + "\\temp_video.mp4"
+            const tempFilePath = __dirname + "/temp_video.mp4";
             fs.writeFileSync(tempFilePath, buffer);
 
-            return new Promise<number>((resolve, reject) => {
-                ffmpeg.ffprobe(tempFilePath, (err, metadata) => {
-                    fs.unlink(tempFilePath, unlinkErr => {
-                        if (unlinkErr) {
-                            console.error('Error deleting temporary file:', unlinkErr);
-                        }
-                        if (err) {
-                            reject(err);
-                            return;
-                        }
-                        const durationInSeconds = Math.ceil(metadata.format.duration);
-                        resolve(durationInSeconds);
-                    });
-                });
-            });
+            const durationInSeconds = await getVideoDurationProcess(tempFilePath);
+            fs.unlinkSync(tempFilePath); // Delete the temporary file
+
+            return Math.ceil(durationInSeconds);
         } catch (err) {
             console.log(err);
             return Infinity;

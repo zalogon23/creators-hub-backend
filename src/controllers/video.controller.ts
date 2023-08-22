@@ -41,7 +41,9 @@ export class VideoController {
             if (!user) {
                 return res.status(401).json({ message: "Couldn't find user" })
             }
+            console.log("pre cloudinary")
             const result = await this.cloudinaryService.upload(video)
+            console.log("after cloudinary")
             const imageResult = await this.thumbnailService.createThumbnail(thumbnail)
             this.videoService.createVideo(result, user.id, title, description, imageResult?.secure_url)
             return res.json({ url: result.secure_url as string })
@@ -52,7 +54,6 @@ export class VideoController {
     }
 
     @Get("")
-    @UseGuards(TokenGuard)
     async getVideos(@Res() res: Response) {
         try {
             const videos = await this.videoService.getVideos()

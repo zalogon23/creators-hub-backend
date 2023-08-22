@@ -11,8 +11,10 @@ export class CloudinaryService {
     ): Promise<UploadApiResponse | UploadApiErrorResponse> {
 
         return new Promise((resolve, reject) => {
+            console.log("cloudinary upload")
             const upload = v2.uploader.upload_stream({
-                resource_type: type
+                resource_type: type,
+                transformation: { format: "mp4" }
             }, (error, result) => {
                 if (error) return reject(error);
                 resolve(result);
