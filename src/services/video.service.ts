@@ -8,6 +8,9 @@ import { MapperService } from './mapper.service';
 import { GetVideoSubscribedDTO } from 'src/dtos/get-video-subscribed-dto';
 import getVideoDurationProcess from 'get-video-duration';
 import * as fs from "fs"
+const ffmpeg = require('fluent-ffmpeg');
+const { Readable } = require('stream');
+const childProcess = require('child_process');
 
 @Injectable()
 export class VideoService {
@@ -132,4 +135,68 @@ export class VideoService {
             return Infinity;
         }
     }
+
+
+    async convertToMp4(file: Express.Multer.File): Promise<Express.Multer.File> {
+        const inputFilePath = file.path;
+
+        return new Promise((resolve, reject) => {
+            const chunks = [];
+            const outputStream = new Readable();
+
+            ffmpeg(inputFilePath)
+                .outputOptions('-c:v', 'libx264')
+                .outputOptions('-c:a', 'aac')
+                .on('end', () => {
+                    console.log('Conversion finished');
+
+                    const convertedData = Buffer.concat(chunks);
+
+                    const videoName = uuid()
+
+                    const convertedFile: Express.Multer.File = {
+                        fieldname: file.fieldname,
+                        originalname: videoName + '.mp4',
+                        encoding: '7bit',
+                        mimetype: 'video/mp4',
+                        size: convertedData.length,
+                        stream: Readable.from(convertedData),
+                        destination: '',
+                        filename: videoName + '.mp4',
+                        path: videoName + '.mp4',
+                        buffer: convertedData,
+                    };
+
+                    resolve(convertedFile);
+                })
+                .on('error', (err) => {
+                    console.error('Error during conversion:', err);
+                    reject(err);
+                })
+                .on('data', (chunk) => {
+                    chunks.push(chunk);
+                    outputStream.push(chunk);
+                })
+                .on('end', () => {
+                    outputStream.push(null);
+                })
+                .pipe(outputStream, { end: false });
+        });
+    }
+
+    async checkFFmpegExistence() {
+        return new Promise((resolve) => {
+            childProcess.exec('ffmpeg -version', (error, stdout, stderr) => {
+                if (error) {
+                    console.error('FFmpeg not found:', error);
+                    resolve(false);
+                } else {
+                    console.log('FFmpeg exists:');
+                    console.log(stdout);
+                    resolve(true);
+                }
+            });
+        });
+    }
+
 }

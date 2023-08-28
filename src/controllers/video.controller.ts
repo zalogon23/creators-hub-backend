@@ -42,11 +42,14 @@ export class VideoController {
                 return res.status(401).json({ message: "Couldn't find user" })
             }
             console.log("pre cloudinary")
-            const result = await this.cloudinaryService.upload(video)
+            const isFfmpegAvailable = await this.videoService.checkFFmpegExistence()
+            console.log("FFMPEG " + (isFfmpegAvailable ? "is" : "is not") + " available.")
+            const mp4Video = await this.videoService.convertToMp4(video)
+            const result = await this.cloudinaryService.upload(mp4Video)
             console.log("after cloudinary")
             const imageResult = await this.thumbnailService.createThumbnail(thumbnail)
             this.videoService.createVideo(result, user.id, title, description, imageResult?.secure_url)
-            return res.json({ url: result.secure_url as string })
+            return res.json("{ url: result.secure_url as string }")
         } catch (err) {
             console.log(err)
             return res.status(500).json({ message: "There was an error in the Video Controller." })
