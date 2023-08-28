@@ -4,7 +4,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 export class ThumbnailService {
     constructor(private readonly cloudinaryService: CloudinaryService) { }
 
-    async createThumbnail(thumbnail: Express.Multer.File) {
+    async createThumbnail(thumbnail: Buffer) {
         try {
             const imageResult = await this.cloudinaryService.upload(thumbnail, "image")
             console.log(imageResult)

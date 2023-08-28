@@ -43,11 +43,11 @@ export class VideoController {
             }
             console.log("pre cloudinary")
             const isFfmpegAvailable = await this.videoService.checkFFmpegExistence()
-            console.log("FFMPEG " + (isFfmpegAvailable ? "is" : "is not") + " available.")
+            console.log("FFMPEG available.")
             const mp4Video = await this.videoService.convertToMp4(video)
             const result = await this.cloudinaryService.upload(mp4Video)
             console.log("after cloudinary")
-            const imageResult = await this.thumbnailService.createThumbnail(thumbnail)
+            const imageResult = thumbnail?.buffer ? await this.thumbnailService.createThumbnail(thumbnail.buffer) : null
             this.videoService.createVideo(result, user.id, title, description, imageResult?.secure_url)
             return res.json("{ url: result.secure_url as string }")
         } catch (err) {

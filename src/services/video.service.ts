@@ -7,7 +7,8 @@ import { v4 as uuid } from "uuid"
 import { MapperService } from './mapper.service';
 import { GetVideoSubscribedDTO } from 'src/dtos/get-video-subscribed-dto';
 import getVideoDurationProcess from 'get-video-duration';
-import * as fs from "fs"
+const fs = require('fs');
+const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
 const { Readable } = require('stream');
 const childProcess = require('child_process');
@@ -137,56 +138,48 @@ export class VideoService {
     }
 
 
-    async convertToMp4(file: Express.Multer.File): Promise<Express.Multer.File> {
-        const inputFilePath = file.path;
+    async convertToMp4(file): Promise<Buffer> {
+        // Create a temporary file path
+        const tempExtension = path.extname(file.originalname) as string;
+
+        if (tempExtension.includes("mp4")) {
+            console.log("Already MP4")
+            return file.buffer
+        }
+        const fileBuffer = file.buffer
+        const tempFilePath = path.join(__dirname, `temp${tempExtension}`);
+
+        const tempOutputFilePath = path.join(__dirname, 'temp_output.mp4');
+
+        // Write the buffer to the temporary file
+        fs.writeFileSync(tempFilePath, fileBuffer);
+        console.log(fileBuffer.length)
 
         return new Promise((resolve, reject) => {
-            const chunks = [];
-            const outputStream = new Readable();
-
-            ffmpeg(inputFilePath)
+            ffmpeg()
+                .input(tempFilePath)
                 .outputOptions('-c:v', 'libx264')
                 .outputOptions('-c:a', 'aac')
+                .outputOptions('-f', 'mp4') // Specify the output format
+                .output(tempOutputFilePath)
                 .on('end', () => {
-                    console.log('Conversion finished');
-
-                    const convertedData = Buffer.concat(chunks);
-
-                    const videoName = uuid()
-
-                    const convertedFile: Express.Multer.File = {
-                        fieldname: file.fieldname,
-                        originalname: videoName + '.mp4',
-                        encoding: '7bit',
-                        mimetype: 'video/mp4',
-                        size: convertedData.length,
-                        stream: Readable.from(convertedData),
-                        destination: '',
-                        filename: videoName + '.mp4',
-                        path: videoName + '.mp4',
-                        buffer: convertedData,
-                    };
-
-                    resolve(convertedFile);
+                    const convertedData = fs.readFileSync(tempOutputFilePath); // Read the temporary output file
+                    fs.unlinkSync(tempFilePath); // Delete the temporary input file
+                    fs.unlinkSync(tempOutputFilePath); // Delete the temporary output file
+                    console.log('Converted data length:', convertedData.length);
+                    resolve(convertedData);
                 })
-                .on('error', (err) => {
-                    console.error('Error during conversion:', err);
+                .on('error', (err, stdout, stderr) => {
+                    console.error('Error during conversion:', stderr);
                     reject(err);
                 })
-                .on('data', (chunk) => {
-                    chunks.push(chunk);
-                    outputStream.push(chunk);
-                })
-                .on('end', () => {
-                    outputStream.push(null);
-                })
-                .pipe(outputStream, { end: false });
-        });
+                .run()
+        })
     }
 
     async checkFFmpegExistence() {
         return new Promise((resolve) => {
-            childProcess.exec('ffmpeg -version', (error, stdout, stderr) => {
+            childProcess.exec('ffmpeg -version', (error, stdout) => {
                 if (error) {
                     console.error('FFmpeg not found:', error);
                     resolve(false);

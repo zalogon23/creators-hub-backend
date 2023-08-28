@@ -6,7 +6,7 @@ import toStream = require('buffer-to-stream');
 
 export class CloudinaryService {
     async upload(
-        file: Express.Multer.File,
+        file: Buffer,
         type: UploadApiOptions["resource_type"] = "video"
     ): Promise<UploadApiResponse | UploadApiErrorResponse> {
 
@@ -20,7 +20,7 @@ export class CloudinaryService {
                 resolve(result);
             });
 
-            toStream(file.buffer).pipe(upload);
+            toStream(file).pipe(upload);
         });
     }
 }
